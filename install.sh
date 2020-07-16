@@ -57,57 +57,10 @@ systemctl enable cronicle.service
 systemctl start cronicle.service
 cp cronicle_useradd.js /opt/cronicle/bin/
 
-### Nginx && CertBot
-add-apt-repository -y universe && add-apt-repository -y ppa:certbot/certbot
-apt update && apt install -y nginx certbot python3-certbot-nginx
-
-rm /etc/nginx/sites-enabled/default
-cp nginx/default.conf /etc/nginx/conf.d/default.conf
-service nginx restart
-
-cp -r html /var/www
-
-### S3FS && Rsync
-apt install -y s3fs rsync
-cp s3fs.sh /etc/cron.daily/s3fs
-chmod 700 /etc/cron.daily/s3fs
-echo ${ACCESS_KEY_ID}:${SECRET_ACCESS_KEY} > /etc/passwd-s3fs
-chmod 600 /etc/passwd-s3fs
-./s3fs.sh
-
-### PostgreSQL
-apt install -y postgresql postgresql-contrib
-cp postgresql/postgresql.conf /etc/postgresql/10/main/
-cp postgresql/pg_hba.conf /etc/postgresql/10/main/
-service postgresql restart
-sudo -u postgres bash -c "psql -c \"CREATE USER ${PSQL_USER} WITH PASSWORD '${POSTGRES_PASSWORD}';\""
-sudo -u postgres bash -c "psql -c \"CREATE DATABASE ${PSQL_DB};\""
-sudo -u postgres bash -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE ${PSQL_DB} TO ${PSQL_USER};\""
-
-sudo -u postgres bash -c "psql -c \"CREATE USER demo WITH PASSWORD 'demo';\""
-cp tutorials/datasets/DEMO.SQL /var/etl
-chown postgres /var/etl/DEMO.SQL
-sudo -u postgres bash -c "psql -f /var/etl/DEMO.SQL"
-rm /var/etl/DEMO.SQL
-sudo -u postgres bash -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE demo TO demo;\""
-sudo -u postgres bash -c "psql -d demo -c \"GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO demo;\""
-
-echo "Configuring hostname/domain..."
-bash ./conf.sh -h
-
-if [ ${DOMAIN} != "" ];
-	then
-  echo "Configuring HTTPS..."
-	bash ./conf.sh -ssl
-fi
-
 echo "Adding first user account..."
 bash ./conf.sh -u
 
 echo "Configuring Cronicle access..."
 bash ./conf.sh -a
-
-echo "Configuring PostgresSQL access..."
-bash ./conf.sh -p
 
 echo "Installation finished. Please restart the server, otherwise hostname change might not be in effect and Cronicle might not start properly."
