@@ -948,5 +948,10 @@
 
 #c.PAMAuthenticator.admin_groups = {'sudo, root'}
 c.Spawner.default_url = '/lab' 
-c.JupyterHub.bind_url = 'http://localhost:8000/studio'
+c.JupyterHub.bind_url = 'http://0.0.0.0:8000/studio'
+c.JupyterHub.api_tokens = {
+    'b2a635cbef409b30b54c6cd1f39b180ec88c264ce135af9e5e407221bfab1ed9': 'admin',
+}
+c.Authenticator.admin_users = set('admin')
+c.JupyterHub.admin_access = True
 #c.Spawner.notebook_dir = '/var/etl'
